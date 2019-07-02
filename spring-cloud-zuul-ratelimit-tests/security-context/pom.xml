@@ -5,7 +5,7 @@
     <parent>
         <artifactId>spring-cloud-zuul-ratelimit-parent</artifactId>
         <groupId>com.marcosbarbero.cloud</groupId>
-        <version>2.2.3.RELEASE</version>
+        <version>1.7.4.RELEASE</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -27,7 +27,7 @@
 
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-zuul</artifactId>
+            <artifactId>spring-cloud-starter-zuul</artifactId>
         </dependency>
 
         <dependency>
