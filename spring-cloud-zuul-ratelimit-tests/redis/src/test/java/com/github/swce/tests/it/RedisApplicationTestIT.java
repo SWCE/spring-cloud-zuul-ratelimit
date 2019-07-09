@@ -117,6 +117,34 @@ public class RedisApplicationTestIT {
         assertEquals(TOO_MANY_REQUESTS, response.getStatusCode());
     }
 
+    @Test
+    public void testUsingBreakOnMatchGeneralCaseWithCidr() {
+        ResponseEntity<String> response = this.restTemplate.getForEntity("/serviceF", String.class);
+        HttpHeaders headers = response.getHeaders();
+        String key = "rate-limit-application_serviceF_127.0.0.1_127.0.0.0_22";
+        assertHeaders(headers, key, false, false);
+        assertEquals(OK, response.getStatusCode());
+
+        response = this.restTemplate.getForEntity("/serviceF", String.class);
+        headers = response.getHeaders();
+        assertHeaders(headers, key, false, false);
+        assertEquals(OK, response.getStatusCode());
+    }
+
+    @Test
+    public void testUsingBreakOnMatchNoMatchGeneralCaseWithCidr() {
+        ResponseEntity<String> response = this.restTemplate.getForEntity("/serviceG", String.class);
+        HttpHeaders headers = response.getHeaders();
+        String key = "rate-limit-application_serviceG_127.0.0.1";
+        assertHeaders(headers, key, false, false);
+        assertEquals(OK, response.getStatusCode());
+
+        response = this.restTemplate.getForEntity("/serviceG", String.class);
+        headers = response.getHeaders();
+        assertHeaders(headers, key, false, false);
+        assertEquals(TOO_MANY_REQUESTS, response.getStatusCode());
+    }
+
     private void assertHeaders(HttpHeaders headers, String key, boolean nullable, boolean quotaHeaders) {
         String quota = headers.getFirst(HEADER_QUOTA + key);
         String remainingQuota = headers.getFirst(HEADER_REMAINING_QUOTA + key);

@@ -20,6 +20,7 @@ import com.github.swce.cloud.autoconfigure.zuul.ratelimit.config.RateLimitUtils;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.net.util.SubnetUtils;
 import org.springframework.cloud.netflix.zuul.filters.Route;
 
 public enum RateLimitType {
@@ -29,6 +30,14 @@ public enum RateLimitType {
     ORIGIN {
         @Override
         public boolean apply(HttpServletRequest request, Route route, RateLimitUtils rateLimitUtils, String matcher) {
+            if (matcher.contains("/")) {
+                try {
+                    SubnetUtils subnetUtils = new SubnetUtils(matcher);
+                    return subnetUtils.getInfo().isInRange(rateLimitUtils.getRemoteAddress(request));
+                } catch (RuntimeException e) {
+                    return false;
+                }
+            }
             return matcher.equals(rateLimitUtils.getRemoteAddress(request));
         }
 

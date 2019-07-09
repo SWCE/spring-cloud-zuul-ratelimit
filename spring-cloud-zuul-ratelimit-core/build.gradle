@@ -2,6 +2,7 @@ description = "Rate limit configuration for Spring Cloud Netflix Zuul - Core"
 
 dependencies {
     compile group: "org.springframework.cloud", name: "spring-cloud-starter-zuul"
+    compile group: "commons-net", name: "commons-net", version: common_net_version
 
     compileOnly group: "org.springframework.boot", name: "spring-boot-autoconfigure-processor"
     compileOnly group: "org.springframework.boot", name: "spring-boot-configuration-processor"

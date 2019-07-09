@@ -20,11 +20,11 @@ import com.github.swce.cloud.autoconfigure.zuul.ratelimit.config.RateLimitUtils;
 import com.github.swce.cloud.autoconfigure.zuul.ratelimit.config.properties.RateLimitProperties;
 import com.github.swce.cloud.autoconfigure.zuul.ratelimit.config.properties.RateLimitProperties.Policy;
 import com.github.swce.cloud.autoconfigure.zuul.ratelimit.config.properties.RateLimitProperties.Policy.MatchType;
+import com.google.common.collect.Lists;
 import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.context.RequestContext;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.netflix.zuul.filters.Route;
@@ -43,8 +43,6 @@ public abstract class AbstractRateLimitFilter extends ZuulFilter {
     private final UrlPathHelper urlPathHelper;
     private final RateLimitUtils rateLimitUtils;
 
-    private boolean alreadyLimited;
-
     @Override
     public boolean shouldFilter() {
         HttpServletRequest request = RequestContext.getCurrentContext().getRequest();
@@ -58,17 +56,22 @@ public abstract class AbstractRateLimitFilter extends ZuulFilter {
 
     protected List<Policy> policy(Route route, HttpServletRequest request) {
         String routeId = Optional.ofNullable(route).map(Route::getId).orElse(null);
-        alreadyLimited = false;
-        return properties.getPolicies(routeId).stream()
-            .filter(policy -> applyPolicy(request, route, policy))
-            .collect(Collectors.toList());
+
+        List<Policy> matchedPolicies = Lists.newArrayList();
+        for (Policy policy : properties.getPolicies(routeId)) {
+            if (applyPolicy(request, route, policy)) {
+                matchedPolicies.add(policy);
+                if (policy.isBreakOnMatch()) {
+                    break;
+                }
+            }
+        }
+
+        return matchedPolicies;
     }
 
     private boolean applyPolicy(HttpServletRequest request, Route route, Policy policy) {
         List<MatchType> types = policy.getType();
-        boolean tmp = alreadyLimited;
-        if(policy.isBreakOnMatch() && types.stream().allMatch(type -> type.apply(request, route, rateLimitUtils)))
-            alreadyLimited = true;
-        return (types.isEmpty() || types.stream().allMatch(type -> type.apply(request, route, rateLimitUtils))) && !tmp;
+        return (types.isEmpty() || types.stream().allMatch(type -> type.apply(request, route, rateLimitUtils)));
     }
 }
